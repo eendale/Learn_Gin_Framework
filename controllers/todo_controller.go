@@ -125,23 +125,47 @@ func UpdateTodo(c *gin.Context) {
 }
 
 // DELETE /todos/:id
-func DeleteTodo(c *gin.Context) {
-	idParam := c.Param("id")
-	objectID, err := primitive.ObjectIDFromHex(idParam)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
+
+
+func DeleteTodo(c *gin.Context){
+	idParam :=c.Param("id")
+	objectID , err:=primitive.ObjectIDFromHex(idParam)
+
+	if err!=nil{
+		c.JSON(http.StatusBadRequest, gin.H{"message":"Invalid ID"})
 		return
 	}
 
-	collection := database.DB.Collection("todos")
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
+	collection:=database.DB.Collection("todos")
+	ctx , cancel :=context.WithTimeout(context.Background(), 5*time.Second)
+     defer cancel()
 
-	result, err := collection.DeleteOne(ctx, bson.M{"_id": objectID})
-	if err != nil || result.DeletedCount == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Todo not found"})
+	 result, err := collection.DeleteOne(ctx, bson.M{"_id":objectID})
+
+	 if err!=nil || result.DeletedCount==0{
+		c.JSON(http.StatusNotFound, gin.H{"message":"Todo Not  Found!"})
 		return
-	}
+	 }
+  c.JSON(http.StatusOK, gin.H{"message":"Todo is  Successfuly  deleted!"})
 
-	c.JSON(http.StatusOK, gin.H{"msg": "Todo deleted successfully"})
 }
+// func DeleteTodo(c *gin.Context) {
+// 	idParam := c.Param("id")
+// 	objectID, err := primitive.ObjectIDFromHex(idParam)
+// 	if err != nil {
+// 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
+// 		return
+// 	}
+
+// 	collection := database.DB.Collection("todos")
+// 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+// 	defer cancel()
+
+// 	result, err := collection.DeleteOne(ctx, bson.M{"_id": objectID})
+// 	if err != nil || result.DeletedCount == 0 {
+// 		c.JSON(http.StatusNotFound, gin.H{"error": "Todo not found"})
+// 		return
+// 	}
+
+// 	c.JSON(http.StatusOK, gin.H{"msg": "Todo deleted successfully"})
+// }
