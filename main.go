@@ -1,16 +1,39 @@
 package main
 
 import (
-	"github.com/Endale2/Learn_Gin_Framework/database"
-	"github.com/Endale2/Learn_Gin_Framework/routes"
-	"github.com/gin-gonic/gin"
+	"time"
+
+	"context"
+
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func main() {
-	r := gin.Default()
+var DB *mongo.Database
 
-	database.ConnectDatabase()
-	routes.TodoRoutes(r)
 
-	r.Run(":8080")
+func ConnectDatabase(){
+	clientOptions  := options.Client().ApplyURI("mongodb://localhost:27017")
+
+	ctx, cancel:= context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	client,err:=mongo.Connect(ctx, clientOptions)
+
+	if err!=nil{
+		panic(err)
+	}
+
+	DB= client.Database("testdb")
+} 
+
+
+type User struct {
+	ID primitive.ObjectID   `bson:"_id, omitempty" json:"id"`
+	Name string          `bson:"name" json:"name"`
+	Age int             `bson:"age" json:"age"`
+
 }
+
+
