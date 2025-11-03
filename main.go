@@ -5,9 +5,10 @@ import (
 
 	"context"
 
+	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 var DB *mongo.Database
@@ -16,7 +17,7 @@ var DB *mongo.Database
 func ConnectDatabase(){
 	clientOptions  := options.Client().ApplyURI("mongodb://localhost:27017")
 
-	ctx, cancel:= context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel:= context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	client,err:=mongo.Connect(ctx, clientOptions)
@@ -37,3 +38,32 @@ type User struct {
 }
 
 
+func  CreateUser(c *gin.Context){
+	collection:=DB.Collection("users")
+	var  user User
+   err:=c.ShouldBindJSON(&user)
+   if err!=nil{
+	c.JSON(400, gin.H{"error":err.Error()})
+	return 
+   }
+   ctx , cancel :=context.WithTimeout(context.Background(), 5*time.Second)
+   defer cancel()
+
+   result, err:=collection.InsertOne(ctx, user)
+
+   if err!=nil{
+	c.JSON(500, gin.H{"error":err.Error()})
+	return 
+   }
+
+   user.ID = result.InsertedID.(primitive.ObjectID)
+
+   c.JSON(201, user)
+}
+
+
+
+
+func  main(){
+
+}
