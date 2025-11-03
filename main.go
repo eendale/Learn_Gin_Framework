@@ -88,7 +88,18 @@ func  GetUsers(c *gin.Context){
 
 }
 
+//routes
+
+func Routes(r *gin.Engine){
+	r.POST("/users", CreateUser)
+	r.GET("/users", GetUsers)
+}
 
 func  main(){
 
+	r:=gin.Default()
+   ConnectDatabase()
+   Routes(r)
+
+   r.Run("8080")
 }
