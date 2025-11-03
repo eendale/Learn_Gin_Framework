@@ -6,6 +6,7 @@ import (
 	"context"
 
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -62,6 +63,30 @@ func  CreateUser(c *gin.Context){
 }
 
 
+func  GetUsers(c *gin.Context){
+	collection:=DB.Collection("users")
+
+	ctx, cancel:=context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	cursor, err:=collection.Find(ctx, bson.M{})
+	if err!=nil{
+		c.JSON(500, gin.H{"error":err.Error()})
+		return
+	}
+
+	var  users []User
+
+	err=cursor.All(ctx, &users)
+
+	if err!=nil{
+		c.JSON(500, gin.H{"error":err.Error()})
+		return
+	}
+
+	c.JSON(200, users)
+
+}
 
 
 func  main(){
