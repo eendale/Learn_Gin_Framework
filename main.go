@@ -32,7 +32,7 @@ func ConnectDatabase(){
 
 
 type User struct {
-	ID primitive.ObjectID   `bson:"_id, omitempty" json:"id"`
+	ID primitive.ObjectID   `bson:"_id,omitempty" json:"id"`
 	Name string          `bson:"name" json:"name"`
 	Age int             `bson:"age" json:"age"`
 
