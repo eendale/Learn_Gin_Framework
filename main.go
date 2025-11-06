@@ -39,6 +39,8 @@ type User struct {
 }
 
 
+
+
 func  CreateUser(c *gin.Context){
 	collection:=DB.Collection("users")
 	var  user User
