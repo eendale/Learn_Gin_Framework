@@ -57,6 +57,27 @@ func GetUsers(c *gin.Context){
 	c.JSON(200, users)
 }
 
+func  CreateUser(c *gin.Context){
+	collection:=DB.Collection("users")
+
+	ctx, cancel:=context.WithTimeout(context.Background(), 5*time.Second)
+    defer  cancel()
+
+	var user User
+   if err:=c.ShouldBindJSON(&user); err!=nil{
+	c.JSON(400, gin.H{"error":"Error  Binding  JSON"})
+	return
+   }
+
+   result ,err:=collection.InsertOne(ctx, user)
+   if err!=nil{
+	c.JSON(500, gin.H{"error":"Failed to create user"})
+	return
+   }
+  user.ID = result.InsertedID.(primitive.ObjectID)
+   c.JSON(201,user)
+}
+
 func Routes(r *gin.Engine){
 	r.GET("/users", GetUsers)
 }
