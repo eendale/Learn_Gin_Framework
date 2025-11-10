@@ -2,31 +2,38 @@ package db
 
 import (
 	"context"
-	"time"
-
+	"fmt"
 	"os"
+	"time"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+var DB *mongo.Database
 
-var DB  *mongo.Database 
+func ConnectDatabase() {
+	uri := os.Getenv("MONGO_URI")
+	dbName := os.Getenv("DATABASE_NAME")
 
-func  ConnectDatabase(){
-	clientOptions:=options.Client().ApplyURI(os.Getenv("MONGO_URI"))
-
-	ctx, cancel:=context.WithTimeout(context.Background(), 10*time.Second)
-
-	defer cancel()
-
-	client, err:=mongo.Connect(ctx, clientOptions)
-
-	if err!=nil{
-		panic("Error  Connecting to  DB")
-
+	if uri == "" || dbName == "" {
+		panic("Missing MONGO_URI or DATABASE_NAME in environment variables")
 	}
 
-	DB = client.Database(os.Getenv("DATABASE_NAME"))
+	clientOptions := options.Client().ApplyURI(uri)
 
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	client, err := mongo.Connect(ctx, clientOptions)
+	if err != nil {
+		panic("Error connecting to DB: " + err.Error())
+	}
+
+	if err = client.Ping(ctx, nil); err != nil {
+		panic("Failed to ping MongoDB: " + err.Error())
+	}
+
+	DB = client.Database(dbName)
+	fmt.Println("✅ Connected to MongoDB:", dbName)
 }
