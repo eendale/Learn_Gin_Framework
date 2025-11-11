@@ -5,6 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+
 func UserRoutes(r *gin.Engine) {
   usersRoute:=r.Group("/users")
   usersRoute.GET("/", controllers.GetUsers)
