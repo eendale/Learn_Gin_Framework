@@ -103,3 +103,51 @@ func GetUser(c *gin.Context) {
 }
 
 
+//update  user 
+
+
+
+func  UpdateUser(c *gin.Context){
+	userCollection:=getCollection()
+	var user models.User 
+	id:=c.Param("id")
+	objID, err:=primitive.ObjectIDFromHex(id)
+
+	if err!=nil{
+		c.JSON(400,gin.H{"error":"Invalid ID"})
+		return
+	}
+
+	err=c.ShouldBindJSON(&user)
+	if err!=nil{
+		c.JSON(400, gin.H{"error":"Binding  Fails"})
+		return
+	}
+
+	ctx,cancel:=context.WithTimeout(context.Background(), 5*time.Second)
+	defer  cancel()
+
+	update:=bson.M{
+		"$set":bson.M{
+			"first_name":user.FirstName,
+			"last_name":user.LastName,
+			"email":user.Email,
+		},
+	}
+
+	result, err:= userCollection.UpdateOne(ctx, bson.M{"_id":objID}, update)
+	if err!=nil{
+         c.JSON(500, gin.H{"error":"Failed to update user!"})
+		return
+	}
+
+	if result.MatchedCount==0{
+		c.JSON(404 , gin.H{"error":"User  Not  Found"})
+		return 
+	}
+
+	user.ID =objID
+
+	c.JSON(200,user)
+
+}
