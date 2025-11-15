@@ -6,10 +6,11 @@ import (
 )
 
 
-func UserRoutes(r *gin.Engine) {
-  usersRoute:=r.Group("/users")
-  usersRoute.GET("/", controllers.GetUsers)
-  usersRoute.POST("/", controllers.CreateUser)
-  usersRoute.DELETE("/:id", controllers.DeleteUser)
-  usersRoute.PUT("/:id", controllers.UpdateUser)
+func  UserRoutes(r *gin.Engine){
+  userRoute:= r.Group("/users")
+
+  userRoute.GET("/", controllers.GetUsers)
+  userRoute.GET("/:id", controllers.GetUser)
+  userRoute.PUT("/:id", controllers.UpdateUser)
+  userRoute.DELETE("/:id", controllers.DeleteUser)
 }

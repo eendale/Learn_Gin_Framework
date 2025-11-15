@@ -1,25 +1,31 @@
 package main
 
 import (
-
+	"log"
 	"os"
 
-	"github.com/Endale2/Learn_Gin_Framework/routes"
 	"github.com/Endale2/Learn_Gin_Framework/db"
+	"github.com/Endale2/Learn_Gin_Framework/routes"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
-
 )
 
 
 func main(){
 	err:=godotenv.Load()
 	if err!=nil{
-		panic("Error loading .env file")
+		log.Fatal("Failed to load  .env")
+		return
 	}
+
 	db.ConnectDatabase()
-	r := gin.Default()
+
+	r:=gin.Default()
+
 	routes.UserRoutes(r)
+
 	r.Run(os.Getenv("PORT"))
+
+
 }
 
