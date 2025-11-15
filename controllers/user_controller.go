@@ -151,3 +151,36 @@ func  UpdateUser(c *gin.Context){
 	c.JSON(200,user)
 
 }
+
+
+
+//delete  user 
+
+
+func  DeleteUser(c  *gin.Context){
+	userCollection:=getCollection()
+	id :=c.Param("id")
+	objID,err:=primitive.ObjectIDFromHex(id)
+
+	if err!=nil{
+		c.JSON(400, gin.H{"error":"Invalid  Id!"})
+		return
+	}
+
+	ctx, cancel:=context.WithTimeout(context.Background(), 5*time.Second)
+	defer  cancel()
+
+	result , err:= userCollection.DeleteOne(ctx , bson.M{"_id":objID})
+
+	if err!=nil{
+		c.JSON(500, gin.H{"error":"Failed to Delete  User!"})
+		return
+	}
+
+	if  result.DeletedCount==0{
+		c.JSON(404, gin.H{"error":"User  Not Found!"})
+		return
+	}
+
+	c.JSON(200, gin.H{"message":"Deleted  Successfully!"})
+}
