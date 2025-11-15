@@ -54,7 +54,7 @@ func GetUsers(c *gin.Context) {
 	cursor, err := userCollection.Find(ctx, bson.M{})
 
 	if err != nil {
-		c.JSON(500, gin.H{"errors": err})
+		c.JSON(500, gin.H{"error": "Failed to fetch users"})
 		return
 	}
 
@@ -69,3 +69,37 @@ func GetUsers(c *gin.Context) {
 
 	c.JSON(200, users)
 }
+
+
+
+func GetUser(c *gin.Context) {
+    userCollection := getCollection()
+    id := c.Param("id")
+
+    // Convert string ID to ObjectID
+    objID, err := primitive.ObjectIDFromHex(id)
+    if err != nil {
+        c.JSON(400, gin.H{"error": "Invalid user ID"})
+        return
+    }
+
+    // Create context with timeout
+    ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+    defer cancel()
+
+    var user models.User
+    err = userCollection.FindOne(ctx, bson.M{"_id": objID}).Decode(&user)
+    if err != nil {
+        if err == mongo.ErrNoDocuments {
+            c.JSON(404, gin.H{"error": "User not found"})
+        } else {
+            c.JSON(500, gin.H{"error": "Failed to fetch user"})
+        }
+        return
+    }
+
+    // Return the user
+    c.JSON(200, user)
+}
+
+
