@@ -3,6 +3,7 @@ package controllers
 import (
 	"context"
 	"net/http"
+	"regexp"
 	"time"
 
 	"github.com/Endale2/Learn_Gin_Framework/db"
@@ -200,7 +201,9 @@ func SearchUser(c *gin.Context) {
 
     var users []models.User
 
-    cursor, err := userCollection.Find(ctx, bson.M{"email": email})
+	safeQuery:=regexp.QuoteMeta(email)
+
+    cursor, err := userCollection.Find(ctx, bson.M{"email":bson.M{"$regex":"^" + safeQuery , "$options":"i"}})
     if err != nil {
         c.JSON(500, gin.H{"error": "Failed to fetch users"})
         return
@@ -209,7 +212,7 @@ func SearchUser(c *gin.Context) {
 
     err = cursor.All(ctx, &users)
     if err != nil {
-        c.JSON(500, gin.H{"error": err.Error()})
+        c.JSON(500, gin.H{"error": "Failed to  Decode users!"})
         return
     }
 
