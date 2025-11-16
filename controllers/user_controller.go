@@ -186,28 +186,32 @@ func  DeleteUser(c  *gin.Context){
 }
 
 
-func  SearchUser(c  *gin.Context){
-	userCollection:=getCollection()
-	email:=c.Query("email")
-	ctx,  cancel:=context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	var users []models.User 
-	cursor , err:=userCollection.Find(ctx, bson.M{"email":email})
-	if err!=nil{
-		c.JSON(500, gin.H{"error":"Failed to Fetch Users"})
-		return
-	}
+func SearchUser(c *gin.Context) {
+    userCollection := getCollection()
+    email := c.Query("email")
 
-	
-	cursor.Close(ctx)
+    if email == "" {
+        c.JSON(400, gin.H{"error": "email query is required"})
+        return
+    }
 
-	err=cursor.All(ctx, &users)
+    ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+    defer cancel()
 
-	if err!=nil{
-		c.JSON(500, gin.H{"error":err})
-		return
-	}
+    var users []models.User
 
-	c.JSON(200, users)
-	
+    cursor, err := userCollection.Find(ctx, bson.M{"email": email})
+    if err != nil {
+        c.JSON(500, gin.H{"error": "Failed to fetch users"})
+        return
+    }
+    defer cursor.Close(ctx)
+
+    err = cursor.All(ctx, &users)
+    if err != nil {
+        c.JSON(500, gin.H{"error": err.Error()})
+        return
+    }
+
+    c.JSON(200, users)
 }
