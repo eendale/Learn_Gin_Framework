@@ -11,6 +11,8 @@ import (
 )
 
 
+
+
 func main(){
 	err:=godotenv.Load()
 	if err!=nil{
@@ -23,6 +25,8 @@ func main(){
 	r:=gin.Default()
 
 	routes.UserRoutes(r)
+
+
 
 	r.Run(os.Getenv("PORT"))
 
