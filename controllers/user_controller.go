@@ -15,207 +15,63 @@ import (
 )
 
 
-func getCollection() *mongo.Collection {
+func  getCollection()*mongo.Collection{
 	return db.DB.Collection("users")
 }
 
-func CreateUser(c *gin.Context) {
-	userCollection := getCollection()
-
-	user := models.User{}
-
-	if err := c.ShouldBindJSON(&user); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON"})
-		return
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	result, err := userCollection.InsertOne(ctx, user)
-
-	if err != nil {
-		c.JSON(500, gin.H{"error": "Failed to  Create  user!"})
-		return
-	}
-
-	user.ID = result.InsertedID.(primitive.ObjectID)
-
-	c.JSON(201, user)
-
-}
-
-//get all users
-
-func GetUsers(c *gin.Context) {
-	userCollection := getCollection()
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	cursor, err := userCollection.Find(ctx, bson.M{})
-
-	if err != nil {
-		c.JSON(500, gin.H{"error": "Failed to fetch users"})
-		return
-	}
-
-	defer cursor.Close(ctx)
-
-	var users []models.User
-	err = cursor.All(ctx, &users)
-	if err != nil {
-		c.JSON(500, gin.H{"error": err})
-		return
-	}
-
-	c.JSON(200, users)
-}
 
 
-
-func GetUser(c *gin.Context) {
-    userCollection := getCollection()
-    id := c.Param("id")
-
-    // Convert string ID to ObjectID
-    objID, err := primitive.ObjectIDFromHex(id)
-    if err != nil {
-        c.JSON(400, gin.H{"error": "Invalid user ID"})
-        return
-    }
-
-    // Create context with timeout
-    ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-    defer cancel()
-
-    var user models.User
-    err = userCollection.FindOne(ctx, bson.M{"_id": objID}).Decode(&user)
-    if err != nil {
-        if err == mongo.ErrNoDocuments {
-            c.JSON(404, gin.H{"error": "User not found"})
-        } else {
-            c.JSON(500, gin.H{"error": "Failed to fetch user"})
-        }
-        return
-    }
-
-    // Return the user
-    c.JSON(200, user)
-}
-
-
-//update  user 
-
-
-
-func  UpdateUser(c *gin.Context){
-	userCollection:=getCollection()
-	var user models.User 
-	id:=c.Param("id")
-	objID, err:=primitive.ObjectIDFromHex(id)
-
+func  CreateUser(c  *gin.Context){
+	userColl:=getCollection()
+	var  user models.User
+	err:=c.ShouldBindJSON(&user)
 	if err!=nil{
-		c.JSON(400,gin.H{"error":"Invalid ID"})
+		c.JSON(400, gin.H{"error":"Error Binding JSON"})
 		return
 	}
-
-	err=c.ShouldBindJSON(&user)
-	if err!=nil{
-		c.JSON(400, gin.H{"error":"Binding  Fails"})
-		return
+	if user.FirstName==""||user.Email ==""{
+     c.JSON(400, gin.H{"error":"First Name or Email is required!"})
+	 return
 	}
 
 	ctx,cancel:=context.WithTimeout(context.Background(), 5*time.Second)
-	defer  cancel()
+	defer cancel()
 
-	update:=bson.M{
-		"$set":bson.M{
-			"first_name":user.FirstName,
-			"last_name":user.LastName,
-			"email":user.Email,
-		},
-	}
-
-	result, err:= userCollection.UpdateOne(ctx, bson.M{"_id":objID}, update)
+	result ,err:= userColl.InsertOne(ctx, user)
 	if err!=nil{
-         c.JSON(500, gin.H{"error":"Failed to update user!"})
-		return
-	}
-
-	if result.MatchedCount==0{
-		c.JSON(404 , gin.H{"error":"User  Not  Found"})
+		c.JSON(500, gin.H{"error":"Failed to create User!"})
 		return 
 	}
 
-	user.ID =objID
+	user.ID=result.InsertedID.(primitive.ObjectID)
 
-	c.JSON(200,user)
-
+	c.JSON(201, user)
 }
 
 
 
-//delete  user 
+func GetUsers(c *gin.Context) {
+	userColl := getCollection()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 
+	cursor, err := userColl.Find(ctx, bson.M{})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch users"})
+		return
+	}
+	defer cursor.Close(ctx)
 
-func  DeleteUser(c  *gin.Context){
-	userCollection:=getCollection()
-	id :=c.Param("id")
-	objID,err:=primitive.ObjectIDFromHex(id)
-
-	if err!=nil{
-		c.JSON(400, gin.H{"error":"Invalid  Id!"})
+	var users []models.User
+	if err := cursor.All(ctx, &users); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to decode users"})
 		return
 	}
 
-	ctx, cancel:=context.WithTimeout(context.Background(), 5*time.Second)
-	defer  cancel()
-
-	result , err:= userCollection.DeleteOne(ctx , bson.M{"_id":objID})
-
-	if err!=nil{
-		c.JSON(500, gin.H{"error":"Failed to Delete  User!"})
+	if len(users) == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "No users found"})
 		return
 	}
 
-	if  result.DeletedCount==0{
-		c.JSON(404, gin.H{"error":"User  Not Found!"})
-		return
-	}
-
-	c.JSON(200, gin.H{"message":"Deleted  Successfully!"})
-}
-
-
-func SearchUser(c *gin.Context) {
-    userCollection := getCollection()
-    email := c.Query("email")
-
-    if email == "" {
-        c.JSON(400, gin.H{"error": "email query is required"})
-        return
-    }
-
-    ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-    defer cancel()
-
-    var users []models.User
-
-	safeQuery:=regexp.QuoteMeta(email)
-
-    cursor, err := userCollection.Find(ctx, bson.M{"email":bson.M{"$regex":"^" + safeQuery , "$options":"i"}})
-    if err != nil {
-        c.JSON(500, gin.H{"error": "Failed to fetch users"})
-        return
-    }
-    defer cursor.Close(ctx)
-
-    err = cursor.All(ctx, &users)
-    if err != nil {
-        c.JSON(500, gin.H{"error": "Failed to  Decode users!"})
-        return
-    }
-
-    c.JSON(200, users)
+	c.JSON(http.StatusOK, users)
 }
