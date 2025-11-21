@@ -14,6 +14,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+
 func getCollection() *mongo.Collection {
 	return db.DB.Collection("users")
 }
